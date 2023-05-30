@@ -1,0 +1,117 @@
+Here is the documentation of the MML syntax:
+
+Special definitions start with a @. Everything else belongs in a channel and every channel needs a name
+from A to Z which should be the first thing on the line unless it's @ or a blank line.
+
+The definitions and effects you can use are:
+
+@S - Define a sample
+	@S0 = { example.flac }
+	@S1 = { another.flac }
+
+@VAS - Volume envelope (single note). The volumes are between 0 and 255.
+	The difference between this and @VAM is with @VAS, the volume shift is applied to each note
+	@VAS0 = { 32 0 } ; this will play notes at channel volume fading to 32 then to 0
+
+@VAM - Volume envelope (multi-note)
+	Similar to @VAS except the volume applies across the span of the @VAM elements instead of
+	applying for each note within the statements
+
+@VO - Volume offset envelope. Volumes in the envelope are offsets from current volume instead of
+	absolute volumes.
+
+@D - Dutycycle envelope. A duty cycle of 128 is a square wave and it can slide either way.
+	@D0 = { 128 32 } ; slides the duty cycle from channel to 128 to 32
+
+@PO - Pitch offset envelope. Slides the pitch by the specified number of Hz.
+	@PO0 = { 0 -256 0 } ; the first number is used to start the effect at an offset. Here it starts at note frequency
+			    plus 0 Hz and slides down 256 Hz then to 0 again
+
+@PN - Pitch to note envelope. Slides to pitch to the note. The number is an octave
+	@PN0 = { c4 c5 c4 c6 } ; Slides the pitch to C at different octaves
+
+@PA - Absolute pitch shift. The values are in Hz.
+
+@R - Reverb
+	@R0 = { 5 0 1000 255 32 } ; 5 reverberations, 0 is the falloff interpolator explained with interpolators
+				    falloff time in MS, start volume of reverb, end volume of reverb
+
+-----------------------------------------------------------------------------
+
+Within a channel, there are many symbols you can use. This is an attempt to document all of them, hopefully
+I don't forget any this time...
+
+abcdefg - Notes
+r - Rest (silence)
+w - wait (continues the same note)
+. - After one of the above, a dot adds half the length of the note to the total length. Two dots adds
+	half plus quarter and so on.
+	All of these can be proceeded by a number that is the length of the note. E.g. a1 is a whole note.
+
++ - is a sharp e.g. a+
+- - is a flat
+
+l - Change the default note length. e.g., l16 makes it 16th notes
+
+t - change the tempo of the channel. e.g. t200 for 200 bpm
+
+o - set the octave e.g., o4
+
+> - down an octave
+
+< - up an octave
+
+@S - e.g., @S0 will use the sample defined as S0 to play the notes in this channel
+
+@ Envelopes and Reverb
+	To use any of the envelopes or reverb, you need to specify them on a section of notes in a channel.
+	E.g., A @R0 abcdfgcde @R0 abcd @R0 cadbd @R0 ; the first @R0 turns on Reverb channel 0, the next turns
+	it off and so on
+
+@TYPE - sets the generator type.
+	E.g., @TYPE0 sets the generator to a pulse wave (default duty cycle is 128 on a pulse wave.)
+	The types are:
+		0 - pulse
+		1 - noise type 1
+		2 - sawtooth
+		3 - sine
+		4 - triangle
+		5 - noise type 2
+
+@CV - Volume curve interpolator setting. This is for @VAS etc which slide the volume.
+	The following list of interpolators applies to all envelopes where the type
+	of curve can be specified, like pitch envelopes, reverb etc...
+		0 - linear
+		1 - hermite
+		2 - slow fade
+		3 - sine
+		4 - pulse
+
+@CP - Same as @CV but for pitch
+
+@CD - Same as @CV but for dutycycle
+
+@RT - this can change phase reset for pitch envelopes
+	For example if you had @PO0 = { 0 -16 0 16 0 } it will reset the phase of
+	the note between each segment of the envelope which can cause a little
+	crackle. If you set it to @RT4 (maybe with @CP1) it will play through
+	it smoothly without resetting the phase. If you set @RT2 it will reset it halfway through.
+
+Buzz
+	Each generator can have buzz added to the waveform it generates. It's basically a hack at this point...
+	If you had a pulse wave in a channel then added sine wave buzz you can imagine the wave being square
+	with a slight (or big) sine at each level.
+	@BF - buzz frequency. It's actually the number of phases of buzz per phase of the note
+		so @BF7 would have 7 phases of buzz on the note
+	@BV - buzz volume (0 to 255)
+	@BTYPE - buzz type. Same as @TYPE
+
+@F - Fade boolean. I think turning this off might introduce some clicks
+
+v - Channel volume, 0 to 255 e.g. v255
+
+m - mix volume 0 to 255
+
+y - Change dutycycle of channel. Applies only to @TYPE0 (pulse.)
+
+s - toggle WAV stretching or not. By default (s0) WAVs are played back without stretching to note length
