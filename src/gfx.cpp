@@ -1081,9 +1081,14 @@ static void set_window_icon()
 	}
 
 #if (defined __linux__ && !defined ANDROID)
-	SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(pixels + size.w * (size.h-1) * 4, size.w, size.h, 32, -size.w * 4, 0xff, 0xff00, 0xff0000, 0xff000000);
+	unsigned char *flip_buf = new unsigned char[size.w*size.h*4];
+	for (int y = 0; y < size.h; y++) {
+		memcpy(flip_buf+y*size.w*4, pixels+((size.h-1)-y)*size.w*4, size.w*4);
+	}
+	SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(flip_buf, size.w, size.h, 32, size.w * 4, 0xff, 0xff00, 0xff0000, 0xff000000);
 	SDL_SetWindowIcon(internal::gfx_context.window, surface);
 	SDL_FreeSurface(surface);
+	delete[] flip_buf;
 #else
 	icon_small = internal::win_create_icon(internal::gfx_context.hwnd, (Uint8 *)pixels, size, 0, 0, false);
 	SetClassLongPtr(internal::gfx_context.hwnd, GCLP_HICONSM, (LONG_PTR)icon_small);
@@ -1187,8 +1192,13 @@ void create_mouse_cursors()
 	}
 
 	if (use_custom_cursor) {
-		mouse_cursor_surface = SDL_CreateRGBSurfaceFrom(pixels + size.w * (size.h-1) * 4, size.w, size.h, 32, -size.w*4, 0xff, 0xff00, 0xff0000, 0xff000000);
+		unsigned char *flip_buf = new unsigned char[size.w*size.h*4];
+		for (int y = 0; y < size.h; y++) {
+			memcpy(flip_buf+y*size.w*4, pixels+((size.h-1)-y)*size.w*4, size.w*4);
+		}
+		mouse_cursor_surface = SDL_CreateRGBSurfaceFrom(flip_buf, size.w, size.h, 32, size.w*4, 0xff, 0xff00, 0xff0000, 0xff000000);
 		mouse_cursor = SDL_CreateColorCursor(mouse_cursor_surface, shim::cursor_hotspot.x, shim::cursor_hotspot.y);
+		delete[] flip_buf;
 	}
 	else {
 		mouse_cursor = 0;
