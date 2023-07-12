@@ -2728,11 +2728,6 @@ std::vector< util::Size<int> > get_supported_video_modes()
 
 void set_custom_mouse_cursor()
 {
-// This code works in Dog-O but for some reason not this game on Linux so return
-#if defined __linux__
-	return;
-#endif
-
 #if defined ANDROID || defined RASPBERRYPI || defined IOS
 	return;
 #else
