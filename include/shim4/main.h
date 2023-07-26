@@ -344,7 +344,7 @@ extern SHIM4_EXPORT glDrawArrays_func glDrawArrays_ptr;
 #endif
 #endif
 
-#if (defined STEAMWORKS && defined __linux__) || (defined __APPLE__)
+#if __linux__ || (defined __APPLE__)
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
 #else
