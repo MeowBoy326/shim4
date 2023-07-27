@@ -26,7 +26,7 @@ TTF::TTF(std::string filename, int size, int sheet_size) :
 
 	file = util::open_file(filename, &sz); // FIXME: does this get automatically closed? (I think yes)
 
-	font = TTF_OpenFontRW(file, true, size*0.75f); // 1 px == 0.75 pt
+	font = TTF_OpenFontRW(file, true, size);
 
 	if (font == 0) {
 		throw util::LoadError("TTF_OpenFontRW failed");
