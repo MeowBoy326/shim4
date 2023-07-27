@@ -5,6 +5,7 @@
 #include "shim4/json.h"
 #include "shim4/model.h"
 #include "shim4/mt.h"
+#include "shim4/pixel_font.h"
 #include "shim4/primitives.h"
 #include "shim4/shader.h"
 #include "shim4/shim.h"
@@ -1238,8 +1239,13 @@ static void load_fonts()
 		shim::font = new TTF("font.ttf", shim::font_size, sheet_size);
 	}
 	catch (util::Error &e) {
-		shim::font = nullptr;
-		util::infomsg(e.error_message + "\n");
+		try {
+			shim::font = new Pixel_Font("font");
+		}
+		catch (util::Error &e) {
+			shim::font = nullptr;
+			util::infomsg(e.error_message + "\n");
+		}
 	}
 }
 
