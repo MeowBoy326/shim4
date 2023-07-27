@@ -63,7 +63,8 @@ void Font::release_all()
 	}
 }
 
-Font::Font()
+Font::Font() :
+	shadow_type(NO_SHADOW)
 {
 }
 
@@ -284,7 +285,32 @@ SDL_Colour Font::draw(SDL_Colour colour, std::string text, util::Point<float> de
 			Glyph *glyph = pair.second;
 
 			if (glyph->sheet == (int)sheet) {
-				sheets[sheet]->draw_region_tinted(colour, glyph->position, glyph->size, pos, 0);
+				util::Point<int> shadow[9] = {
+					{ -1, -1 },
+					{ 0, -1 },
+					{ 1, -1 },
+					{ -1, 0 },
+					{ 0, 0 },
+					{ 1, 0 },
+					{ -1, 1 },
+					{ 0, 1 },
+					{ 1, 1 }
+				};
+				switch (shadow_type) {
+					case FULL_SHADOW:
+						sheets[sheet]->draw_region_tinted(shadow_colour, glyph->position, glyph->size, pos+shadow[0], 0);
+						sheets[sheet]->draw_region_tinted(shadow_colour, glyph->position, glyph->size, pos+shadow[1], 0);
+						sheets[sheet]->draw_region_tinted(shadow_colour, glyph->position, glyph->size, pos+shadow[2], 0);
+						sheets[sheet]->draw_region_tinted(shadow_colour, glyph->position, glyph->size, pos+shadow[3], 0);
+						sheets[sheet]->draw_region_tinted(shadow_colour, glyph->position, glyph->size, pos+shadow[6], 0);
+					case DROP_SHADOW:
+						sheets[sheet]->draw_region_tinted(shadow_colour, glyph->position, glyph->size, pos+shadow[5], 0);
+						sheets[sheet]->draw_region_tinted(shadow_colour, glyph->position, glyph->size, pos+shadow[7], 0);
+						sheets[sheet]->draw_region_tinted(shadow_colour, glyph->position, glyph->size, pos+shadow[8], 0);
+					case NO_SHADOW:
+						sheets[sheet]->draw_region_tinted(colour, glyph->position, glyph->size, pos, 0);
+						break;
+				}
 			}
 
 			pos.x += glyph->size.w;
@@ -520,6 +546,16 @@ void Font::remove_extra_glyph(int code)
 void Font::set_extra_glyph_offset(util::Point<float> offset)
 {
 	extra_glyph_offset = offset;
+}
+
+void Font::enable_shadow(SDL_Colour shadow_colour, Shadow_Type shadow_type) {
+	this->shadow_colour = shadow_colour;
+	this->shadow_type = shadow_type;
+}
+
+void Font::disable_shadow()
+{
+	shadow_type = NO_SHADOW;
 }
 
 #ifdef _WIN32

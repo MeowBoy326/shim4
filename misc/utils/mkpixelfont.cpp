@@ -120,7 +120,7 @@ int main(void)
 	al_init_ttf_addon();
 	al_init_image_addon();
 
-	ttf = al_load_font("font.ttf", 16, ALLEGRO_TTF_MONOCHROME | ALLEGRO_TTF_NO_KERNING | ALLEGRO_TTF_NO_AUTOHINT);
+	ttf = al_load_font("font.ttf", 12, ALLEGRO_TTF_MONOCHROME | ALLEGRO_TTF_NO_KERNING | ALLEGRO_TTF_NO_AUTOHINT);
 
 	ALLEGRO_FILE *f = al_fopen("glyphs.utf8", "rb");
 	int sz;

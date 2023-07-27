@@ -11,6 +11,12 @@ class Image;
 
 ALIGN(16) Font {
 public:
+	enum Shadow_Type {
+		NO_SHADOW = 0,
+		DROP_SHADOW,
+		FULL_SHADOW
+	};
+
 	static std::string strip_codes(std::string text, bool strip_colour_codes, bool strip_wrap_codes, bool strip_extra_glyph_codes);
 	static void static_start();
 	static void release_all();
@@ -33,6 +39,9 @@ public:
 	SHIM4_EXPORT void add_extra_glyph(int code, Image *image); // for @00 images
 	SHIM4_EXPORT void remove_extra_glyph(int code);
 	SHIM4_EXPORT void set_extra_glyph_offset(util::Point<float> offset);
+
+	SHIM4_EXPORT void enable_shadow(SDL_Colour shadow_colour, Shadow_Type shadow_type);
+	SHIM4_EXPORT void disable_shadow();
 
 	// For 16 byte alignment to make glm::mat4 able to use SIMD
 #ifdef _WIN32
@@ -58,6 +67,9 @@ protected:
 
 	std::map<int, Image *> extra_glyphs;
 	util::Point<float> extra_glyph_offset;
+
+	SDL_Colour shadow_colour;
+	Shadow_Type shadow_type;
 };
 
 } // End namespace gfx
