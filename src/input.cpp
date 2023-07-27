@@ -1014,8 +1014,6 @@ std::string get_joystick_button_colour_code_steam(int button)
 
 std::string get_joystick_button_colour_code(int button)
 {
-	return "";
-
 #ifdef STEAM_INPUT
 	if (shim::steam_init_failed == false) {
 		return get_joystick_button_colour_code_steam(button);
