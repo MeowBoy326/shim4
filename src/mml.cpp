@@ -1943,13 +1943,13 @@ void MML::load(SDL_RWops *f, bool load_from_filesystem)
 							int p = name.length();
 
 							while (p > 0) {
-								if (name[p] == '/') {
+								if (name[p] == '/' || name[p] == '\\') {
 									break;
 								}
 								p--;
 							}
 
-							if (name[p] == '/') {
+							if (name[p] == '/' || name[p] == '\\') {
 								sample_name = name.substr(0, p+1) + sample_name;
 								sample = new Sample(sample_name, load_from_filesystem);
 							}
