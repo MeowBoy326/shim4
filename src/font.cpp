@@ -1,4 +1,5 @@
 #include "shim4/font.h"
+#include "shim4/gfx.h"
 #include "shim4/image.h"
 #include "shim4/shim.h"
 #include "shim4/utf8.h"

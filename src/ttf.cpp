@@ -142,11 +142,11 @@ TTF::Glyph *TTF::create_glyph(Uint32 ch, gfx::Image *glyph_image)
 	int this_sheet_size = get_sheet_size();
 
 	int n = num_glyphs;
-	int n_per_row = this_sheet_size / (size + 2);
+	int n_per_row = this_sheet_size / (size*2 + 2); // we are always multiplying width by 2 to fit wide fonts
 	int row = n / n_per_row;
 	int col = n % n_per_row;
 	Glyph *glyph = new Glyph;
-	glyph->position = {col * (size+2) + 1, row * (size+2) + 1};
+	glyph->position = {col * (size*2+2) + 1, row * (size+2) + 1};
 	glyph->size = glyph_image->size;
 	glyph->sheet = curr_sheet;
 
@@ -207,7 +207,7 @@ bool TTF::cache_glyphs(std::string text)
 	while ((ch = util::utf8_char_next(text, offset)) != 0) {
 		if (glyphs.find(ch) == glyphs.end()) {
 			int sheet_size = get_sheet_size();
-			int n_per_row = sheet_size / (size + 2);
+			int n_per_row = sheet_size / (size*2 + 2);
 			if (num_glyphs >= n_per_row*n_per_row) {
 				curr_sheet++;
 				num_glyphs = 0;

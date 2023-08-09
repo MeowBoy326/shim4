@@ -48,9 +48,7 @@ Pixel_Font::Pixel_Font(std::string name)
 		}
 	}
 
-	int wmul = wide ? 2 : 1;
-	
-	size_w = size * wmul;
+	size_w = size * 2;
 
 	int glyphs_wide = sheets[0]->size.w / ((size_w + PAD*2)*3);
 
@@ -68,7 +66,7 @@ Pixel_Font::Pixel_Font(std::string name)
 		glyph->size.h = size;
 		int max_x;
 		if (ch == ' ') {
-			max_x = 1 * (wmul == 1 ? 1 : 3); // FIXME: need a better way
+			max_x = 2; // FIXME: need a better way
 		}
 		else {
 			max_x = 0;
