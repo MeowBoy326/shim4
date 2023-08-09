@@ -597,11 +597,16 @@ static void create_window(int scaled_w, int scaled_h, bool force_integer_scaling
 	flags |= SDL_WINDOW_FULLSCREEN;
 #else
 	util::Size<int> desktop_size = get_desktop_resolution();
+	if (window_h <= 0) {
+		centre_y = 0;
+	}
+	else {
 #ifdef __linux__
-	centre_y = int((desktop_size.h-window_h)/2*0.5f); // slightly up
+		centre_y = int((desktop_size.h-window_h)/2*0.5f); // slightly up
 #else
-	centre_y = int((desktop_size.h-window_h)/2*0.75f); // slightly up
+		centre_y = int((desktop_size.h-window_h)/2*0.75f); // slightly up
 #endif
+	}
 #endif
 
 	if (shim::hide_window) {
@@ -629,6 +634,11 @@ static void create_window(int scaled_w, int scaled_h, bool force_integer_scaling
 		SDL_GetDisplayBounds(shim::adapter, &r);
 		win_x = r.x;
 		win_y = r.y;
+		if (window_w <= 0 || window_h <= 0) {
+			SDL_GetDesktopDisplayMode(shim::adapter, &mode);
+			window_w = mode.w;
+			window_h = mode.h;
+		}
 	}
 	else {
 		win_x = SDL_WINDOWPOS_CENTERED_DISPLAY(shim::adapter);
