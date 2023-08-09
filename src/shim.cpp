@@ -80,6 +80,7 @@ util::Size<int> screen_size;
 util::Size<int> real_screen_size;
 gfx::Font *font;
 int font_size;
+std::string font_name;
 bool create_depth_buffer;
 bool create_stencil_buffer;
 util::Size<int> depth_buffer_size;
@@ -327,7 +328,8 @@ bool static_start(int sdl_init_flags)
 	timer_event_id = (Uint32)-1;
 	quitting = false;
 	font = 0;
-	font_size = 32;
+	font_size = 8;
+	font_name = "font.ttf";
 	adapter = 0;
 	cursor_hotspot = {0, 0};
 	guis.clear();

@@ -90,6 +90,7 @@ extern SHIM4_EXPORT util::Size<int> screen_size; // before scaling
 extern SHIM4_EXPORT util::Size<int> real_screen_size; // actual window size
 extern SHIM4_EXPORT gfx::Font *font;
 extern SHIM4_EXPORT int font_size;
+extern SHIM4_EXPORT std::string font_name;
 extern SHIM4_EXPORT bool create_depth_buffer;
 extern SHIM4_EXPORT bool create_stencil_buffer;
 extern SHIM4_EXPORT util::Size<int> depth_buffer_size;

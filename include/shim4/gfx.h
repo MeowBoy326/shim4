@@ -101,6 +101,8 @@ typedef void (**_lost_device_callback_pointer)(void);
 void SHIM4_EXPORT register_lost_device_callbacks(_lost_device_callback, _lost_device_callback);
 void SHIM4_EXPORT get_lost_device_callbacks(_lost_device_callback_pointer, _lost_device_callback_pointer);
 
+void SHIM4_EXPORT reload_fonts();
+
 void SHIM4_EXPORT set_minimum_window_size(util::Size<int> size);
 void SHIM4_EXPORT set_maximum_window_size(util::Size<int> size);
 void SHIM4_EXPORT set_min_aspect_ratio(float min); // anything over/under gets black bars. default: 4.0f / 3.0f.

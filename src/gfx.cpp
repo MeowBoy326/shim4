@@ -1246,7 +1246,7 @@ static void load_fonts()
 	}
 
 	try {
-		shim::font = new TTF("font.ttf", shim::font_size, sheet_size);
+		shim::font = new TTF(shim::font_name, shim::font_size, sheet_size);
 	}
 	catch (util::Error &e) {
 		try {
@@ -1263,6 +1263,12 @@ static void destroy_fonts()
 {
 	delete shim::font;
 	shim::font = 0;
+}
+
+void reload_fonts()
+{
+	destroy_fonts();
+	load_fonts();
 }
 
 void real_set_scissor(int x, int y, int w, int h)
