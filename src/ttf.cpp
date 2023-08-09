@@ -198,6 +198,10 @@ bool TTF::cache_glyphs(std::string text)
 	}
 #endif
 
+	gfx::Image *old_target = gfx::get_target_image();
+	glm::mat4 mv, p;
+	gfx::get_matrices(mv, p);
+
 	int offset = 0;
 	Uint32 ch;
 	while ((ch = util::utf8_char_next(text, offset)) != 0) {
@@ -211,12 +215,16 @@ bool TTF::cache_glyphs(std::string text)
 			set_sheet_target(curr_sheet);
 			gfx::Image *glyph_image = load_glyph_image(ch);
 			if (glyph_image == 0) {
-				gfx::set_target_backbuffer();
+				gfx::set_target_image(old_target);
+				gfx::set_matrices(mv, p);
+				gfx::update_projection();
 				return false;
 			}
 			Glyph *glyph = create_glyph(ch, glyph_image);
 			if (glyph == 0) {
-				gfx::set_target_backbuffer();
+				gfx::set_target_image(old_target);
+				gfx::set_matrices(mv, p);
+				gfx::update_projection();
 				delete glyph_image;
 				return false;
 			}
@@ -225,7 +233,9 @@ bool TTF::cache_glyphs(std::string text)
 		}
 	}
 
-	gfx::set_target_backbuffer();
+	gfx::set_target_image(old_target);
+	gfx::set_matrices(mv, p);
+	gfx::update_projection();
 
 	return true;
 }
