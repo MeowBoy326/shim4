@@ -944,30 +944,30 @@ std::string get_joystick_button_colour_code_steam(int button)
 		case k_EControllerActionOrigin_XBoxOne_A:
 		case k_EControllerActionOrigin_XBox360_A:
 		case k_EControllerActionOrigin_SteamV2_A:
-			return "|40";
+			return "#32c832";
 		case k_EControllerActionOrigin_B:
 		case k_EControllerActionOrigin_XBoxOne_B:
 		case k_EControllerActionOrigin_XBox360_B:
 		case k_EControllerActionOrigin_SteamV2_B:
-			return "|41";
+			return "#c83232";
 		case k_EControllerActionOrigin_X:
 		case k_EControllerActionOrigin_XBox360_X:
 		case k_EControllerActionOrigin_XBoxOne_X:
 		case k_EControllerActionOrigin_SteamV2_X:
-			return "|42";
+			return "#3296c8";
 		case k_EControllerActionOrigin_Y:
 		case k_EControllerActionOrigin_XBoxOne_Y:
 		case k_EControllerActionOrigin_XBox360_Y:
 		case k_EControllerActionOrigin_SteamV2_Y:
-			return "|43";
+			return "#c8c832";
 		case k_EControllerActionOrigin_PS4_X:
-			return "|47";
+			return "#7cb2e8";
 		case k_EControllerActionOrigin_PS4_Circle:
-			return "|44";
+			return "#ff6666";
 		case k_EControllerActionOrigin_PS4_Triangle:
-			return "|46";
+			return "#40e2a0";
 		case k_EControllerActionOrigin_PS4_Square:
-			return "|45";
+			return "#ff69f8";
 		case k_EControllerActionOrigin_LeftBumper:
 		case k_EControllerActionOrigin_PS4_LeftBumper:
 		case k_EControllerActionOrigin_XBoxOne_LeftBumper:
@@ -1032,13 +1032,13 @@ std::string get_joystick_button_colour_code(int button)
 	if (type == PLAYSTATION) {
 		switch (button) {
 			case TGUI_B_A:
-				return "|47";
+				return "#7cb2e8";
 			case TGUI_B_B:
-				return "|44";
+				return "#ff6666";
 			case TGUI_B_X:
-				return "|45";
+				return "#ff69f8";
 			case TGUI_B_Y:
-				return "|46";
+				return "#40e2a0";
 			default:
 				return "";
 		}
@@ -1051,13 +1051,13 @@ std::string get_joystick_button_colour_code(int button)
 		if (type == IOS_JOY) {
 			switch (button) {
 				case TGUI_B_A:
-					return "|41";
+					return "#c83232";
 				case TGUI_B_B:
-					return "|40";
+					return "#32c832";
 				case TGUI_B_X:
-					return "|43";
+					return "#c8c832";
 				case TGUI_B_Y:
-					return "|42";
+					return "#3296c8";
 				default:
 					return "";
 			}
@@ -1067,13 +1067,13 @@ std::string get_joystick_button_colour_code(int button)
 		{
 			switch (button) {
 				case TGUI_B_A:
-					return "|40";
+					return "#32c832";
 				case TGUI_B_B:
-					return "|41";
+					return "#c83232";
 				case TGUI_B_X:
-					return "|42";
+					return "#3296c8";
 				case TGUI_B_Y:
-					return "|43";
+					return "#c8c832";
 				default:
 					return "";
 			}

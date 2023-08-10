@@ -31,6 +31,20 @@ std::string Font::strip_codes(std::string text, bool strip_colour_codes, bool st
 			}
 			continue;
 		}
+		if (strip_colour_codes && ch == '#') {
+			bool err = false;
+			for (int i = 0; i < 6; i++) {
+				Uint32 a = util::utf8_char_next(text, offset);
+				if (a == 0) {
+					err = true;
+					break;
+				}
+			}
+			if (err) {
+				break;
+			}
+			continue;
+		}
 		// Extra glyphs
 		if (strip_extra_glyph_codes && ch == '@') {
 			Uint32 a = util::utf8_char_next(text, offset);
@@ -93,6 +107,21 @@ int Font::get_text_width(std::string text, bool interpret_colour_codes, bool int
 			}
 			int b = util::utf8_char_next(text, offset);
 			if (b == 0) {
+				break;
+			}
+
+			continue;
+		}
+		if (interpret_colour_codes && ch == '#') {
+			bool err = false;
+			for (int i = 0; i < 6; i++) {
+				int a = util::utf8_char_next(text, offset);
+				if (a == 0) {
+					err = true;
+					break;
+				}
+			}
+			if (err) {
 				break;
 			}
 
@@ -224,6 +253,54 @@ SDL_Colour Font::draw(SDL_Colour colour, std::string text, util::Point<float> de
 
 				continue;
 			}
+			else if (interpret_colour_codes && ch == '#') {
+				bool err = false;
+				int c[6];
+				for (int i = 0; i < 6; i++) {
+					int a = util::utf8_char_next(text, offset);
+					if (a == 0) {
+						err = true;
+						break;
+					}
+					c[i] = a;
+				}
+				if (err) {
+					break;
+				}
+
+				int rgb[3];
+
+				for (int i = 0; i < 3; i++) {
+					int a = c[i*2+0];
+					int b = c[i*2+1];
+					if (a >= 'A' && a <= 'F') {
+						a = a - 'A' + 10;
+					}
+					else if (a >= 'a' && a <= 'f') {
+						a = a - 'a' + 10;
+					}
+					else {
+						a = a - '0';
+					}
+					if (b >= 'A' && b <= 'F') {
+						b = b - 'A' + 10;
+					}
+					else if (b >= 'a' && b <= 'f') {
+						b = b - 'a' + 10;
+					}
+					else {
+						b = b - '0';
+					}
+					rgb[i] = a * 16 + b;
+				}
+
+				colour.r = rgb[0];
+				colour.g = rgb[1];
+				colour.b = rgb[2];
+				colour.a = 255;
+
+				continue;
+			}
 			// extra glyphs
 			if (ch == '@') {
 				// Skip them here, use them below
@@ -351,14 +428,29 @@ int Font::draw_wrapped(SDL_Colour colour, std::string text, util::Point<float> d
 		chars_to_draw = elapsed / delay;
 		// Must loop through and add for any colour codes/extra glyphs
 		for (int i = 0; i < chars_to_draw && text[i] != 0; i++) {
-			if ((interpret_colour_codes && text[i] == '|') || (interpret_extra_glyphs && text[i] == '@')) {
-				chars_to_draw += text[i] == '|' ? 3 : 2; // skip only 2 for @ because it's an actual character drawn
-				i++;
-				if (text[i] == 0) {
-					break;
+			if ((interpret_colour_codes && text[i] == '|') || (interpret_extra_glyphs && text[i] == '@') || (interpret_colour_codes && text[i] == '#')) {
+				int inc;
+				if (text[i] == '|') {
+					chars_to_draw += 3;
+					inc = 2;
 				}
-				i++;
-				if (text[i] == 0) {
+				else if (text[i] == '#') {
+					chars_to_draw += 7;
+					inc = 6;
+				}
+				else {
+					chars_to_draw += 2;
+					inc = 2;
+				}
+				bool err = false;
+				for (int j = 0; j < inc; j++) {
+					i++;
+					if (text[i] == 0) {
+						err = true;
+						break;
+					}
+				}
+				if (err) {
 					break;
 				}
 			}
@@ -387,6 +479,9 @@ int Font::draw_wrapped(SDL_Colour colour, std::string text, util::Point<float> d
 			}
 			if (interpret_colour_codes && ch == '|') {
 				skip_next = 2;
+			}
+			else if (interpret_colour_codes && ch == '#') {
+				skip_next = 6;
 			}
 			else if (interpret_extra_glyphs && ch == '@') {
 				skip_next = 2;
