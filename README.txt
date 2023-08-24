@@ -17,8 +17,3 @@ This includes:
 	Localisation support
 
 And a lot more.
-
---
-
-NOTE: at some point glm stopped working. The one included in external/
-needs to be used until I can find a fix.
