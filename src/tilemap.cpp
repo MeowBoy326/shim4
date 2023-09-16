@@ -143,7 +143,7 @@ Tilemap::Tilemap(std::string map_filename, bool load_from_filesystem)
 		f = util::open_file(map_filename, 0);
 	}
 
-	(void)SDL_ReadLE32(f); // Skip "DOGO"
+	(void)SDL_ReadLE32(f); // Skip "WM2!"
 
 	size.w = SDL_ReadLE16(f);
 	size.h = SDL_ReadLE16(f);
