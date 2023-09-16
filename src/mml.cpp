@@ -14,7 +14,7 @@
 #ifdef DUMP
 extern SDL_RWops *dumpfile;
 static bool use_mml_loops = true;
-static int mml_loops = 15;
+static int mml_loops = 3;
 #else
 static bool use_mml_loops = false;
 static int mml_loops = 0;
@@ -1940,7 +1940,7 @@ void MML::load(SDL_RWops *f, bool load_from_filesystem)
 						}
 						catch (util::LoadError &e) {
 							// try loading it relative to the MML
-							int p = name.length();
+							int p = name.length() - 1;
 
 							while (p > 0) {
 								if (name[p] == '/' || name[p] == '\\') {
@@ -1949,9 +1949,12 @@ void MML::load(SDL_RWops *f, bool load_from_filesystem)
 								p--;
 							}
 
-							if (name[p] == '/' || name[p] == '\\') {
+							if (p >= 0 && (name[p] == '/' || name[p] == '\\')) {
 								sample_name = name.substr(0, p+1) + sample_name;
 								sample = new Sample(sample_name, load_from_filesystem);
+							}
+							else {
+								throw e;
 							}
 						}
 						while ((int)wav_samples.size() <= num) {
