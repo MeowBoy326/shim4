@@ -370,12 +370,19 @@ unsigned char *Image::read_png(std::string filename, util::Size<int> &out_size, 
 		for (int x = 0; x < width; x++) {
 			unsigned char *p = bytes + y * width * 4 + x * 4;
 			int r, g, b, a;
-			r = *p++;
-			g = *p++;
-			b = *p++;
-			a = *p++;
+			r = p[0];
+			g = p[1];
+			b = p[2];
+			a = p[3];
 			if (a != 255) {
 				alpha = true;
+				float f = a/255.0f;
+				r *= f;
+				g *= f;
+				b *= f;
+				p[0] = r;
+				p[1] = g;
+				p[2] = b;
 			}
 			if (a != 0) {
 				if (tl.x < 0 || tl.x > x) {
@@ -391,6 +398,7 @@ unsigned char *Image::read_png(std::string filename, util::Size<int> &out_size, 
 					br.y = y;
 				}
 			}
+			p += 4;
 		}
 	}
 
