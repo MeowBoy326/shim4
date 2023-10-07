@@ -247,7 +247,7 @@ unsigned char *Image::read_png(std::string filename, util::Size<int> &out_size, 
 	/* Really load the image now. */
 	png_uint_32 width, height, rowbytes;
 	int bit_depth, color_type, interlace_type;
-	int tRNS_to_alpha = FALSE;
+	int tRNS_to_alpha = false;
 	int number_passes, pass;
 
 	/* The call to png_read_info() gives us all of the information from the
@@ -272,7 +272,7 @@ unsigned char *Image::read_png(std::string filename, util::Size<int> &out_size, 
 	 * in a tRNS chunk. */
 	if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) {
 		png_set_tRNS_to_alpha(png_ptr);
-		tRNS_to_alpha = TRUE;
+		tRNS_to_alpha = true;
 	}
 
 	/* Convert 16-bits per colour component to 8-bits per colour component. */
