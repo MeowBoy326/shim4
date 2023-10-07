@@ -154,146 +154,257 @@ void Image::audit()
 }
 
 #ifdef USE_PNG
+/* loadpng, Allegro wrapper routines for libpng
+ * by Peter Wang (tjaden@users.sf.net).
+ *
+ * Modified for use in Shim.
+ */
+
+static void user_error_fn(png_structp png_ptr, png_const_charp message)
+{
+   jmp_buf *jmpbuf = (jmp_buf *)png_get_error_ptr(png_ptr);
+   (void)message;
+   longjmp(*jmpbuf, 1);
+}
+
 static void read_data(png_structp png_ptr, png_bytep data, png_uint_32 length)
 {
     SDL_RWops *f = (SDL_RWops *)png_get_io_ptr(png_ptr);
-    if ((png_uint_32)SDL_RWread(f, data, length, 1) != 1) {
-    	throw util::LoadError("Error loading PNG");
-    }
+    if ((png_uint_32)SDL_RWread(f, data, length, 1) != 1)
+	png_error(png_ptr, "read error (loadpng calling pack_fread)");
+}
+
+#define PNG_BYTES_TO_CHECK 4
+
+static int check_if_png(SDL_RWops *fp)
+{
+    unsigned char buf[PNG_BYTES_TO_CHECK];
+
+    if (SDL_RWread(fp, buf, PNG_BYTES_TO_CHECK, 1) != 1)
+	return 0;
+
+    return (png_sig_cmp(buf, (png_size_t)0, PNG_BYTES_TO_CHECK) == 0);
 }
 
 unsigned char *Image::read_png(std::string filename, util::Size<int> &out_size, SDL_Colour *out_palette, util::Point<int> *opaque_topleft, util::Point<int> *opaque_bottomright, bool *has_alpha, bool load_from_filesystem)
 {
-	FILE *fp;
-	SDL_RWops *file;
-	int sz;
-	int number_to_check = 8;
+	SDL_Colour tmppal[256];
 
+	SDL_RWops *fp;
 	if (load_from_filesystem) {
-		fp = fopen(filename.c_str(), "rb");
-		if (!fp){
-			return nullptr;
-		}
-		unsigned char header[9];
-		fread(header, 1, number_to_check, fp);
-		int is_png = !png_sig_cmp(header, 0, number_to_check);
-		if (!is_png){
-			return nullptr;
-		}
+		fp = SDL_RWFromFile(filename.c_str(), "rb");
 	}
 	else {
-		file = util::open_file(filename, &sz);
-		if (!file){
-			return nullptr;
-		}
-		unsigned char header[9];
-		SDL_RWread(file, header, number_to_check, 1);
-		int is_png = !png_sig_cmp(header, 0, number_to_check);
-		if (!is_png){
-			return nullptr;
-		}
+		fp = util::open_file(filename, 0);
 	}
 
-	// Create png struct pointer
-	png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-	if (!png_ptr) {
-		return nullptr;
+	if (fp == 0) {
+		return 0;
 	}
-	png_infop info_ptr = png_create_info_struct(png_ptr);
+
+	jmp_buf jmpbuf;
+	png_structp png_ptr;
+	png_infop info_ptr;
+
+	if (!check_if_png(fp)) {
+		return NULL;
+	}
+
+	/* Create and initialize the png_struct with the desired error handler
+	 * functions.  If you want to use the default stderr and longjump method,
+	 * you can supply NULL for the last three parameters.  We also supply the
+	 * the compiler header file version, so that we know if the application
+	 * was compiled with a compatible version of the library.
+	 */
+	png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING,
+					 (void *)NULL, NULL, NULL);
+	if (!png_ptr) {
+		return NULL;
+	}
+
+	/* Allocate/initialize the memory for image information. */
+	info_ptr = png_create_info_struct(png_ptr);
 	if (!info_ptr) {
 		png_destroy_read_struct(&png_ptr, (png_infopp)NULL, (png_infopp)NULL);
-		return nullptr;
+		return NULL;
 	}
-	png_infop end_info = png_create_info_struct(png_ptr);
-	if (!end_info) {
+
+	/* Set error handling. */
+	if (setjmp(jmpbuf)) {
+		/* Free all of the memory associated with the png_ptr and info_ptr */
 		png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
-		return nullptr;
+		/* If we get here, we had a problem reading the file */
+		return NULL;
 	}
+	png_set_error_fn(png_ptr, jmpbuf, user_error_fn, NULL);
 
-	if (load_from_filesystem) {
-		png_init_io(png_ptr, fp);
-	}
-	else {
-	    png_set_read_fn(png_ptr, file, (png_rw_ptr)read_data);
-	}
+	/* Use Allegro packfile routines. */
+	png_set_read_fn(png_ptr, fp, (png_rw_ptr)read_data);
 
-	png_set_sig_bytes(png_ptr, number_to_check);
+	/* We have already read some of the signature. */
+	png_set_sig_bytes(png_ptr, PNG_BYTES_TO_CHECK);
 
-	// 3. Read png info
+	/* Really load the image now. */
+	png_uint_32 width, height, rowbytes;
+	int bit_depth, color_type, interlace_type;
+	int tRNS_to_alpha = FALSE;
+	int number_passes, pass;
+
+	/* The call to png_read_info() gives us all of the information from the
+	 * PNG file before the first IDAT (image data chunk).
+	 */
 	png_read_info(png_ptr, info_ptr);
 
-	png_uint_32 width, height;
-	int bit_depth, color_type, interlace_type;
+	png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type,
+		 &interlace_type, NULL, NULL);
 
-	bit_depth = png_get_bit_depth (png_ptr, info_ptr);
-	color_type = png_get_color_type (png_ptr, info_ptr);
+	/* Extract multiple pixels with bit depths of 1, 2, and 4 from a single
+	 * byte into separate bytes (useful for paletted and grayscale images).
+	 */
+	png_set_packing(png_ptr);
 
-	png_set_strip_16(png_ptr);
 	png_set_expand(png_ptr);
 	if (color_type == PNG_COLOR_TYPE_PALETTE) {
 		png_set_palette_to_rgb (png_ptr);
+	}	
+
+	/* Adds a full alpha channel if there is transparency information
+	 * in a tRNS chunk. */
+	if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) {
+		png_set_tRNS_to_alpha(png_ptr);
+		tRNS_to_alpha = TRUE;
 	}
-	if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8) {
-	       //png_set_gray_1_2_4_to_8 (png_ptr);
-	}
-	if (png_get_valid (png_ptr, info_ptr, PNG_INFO_tRNS)) {
-	          png_set_tRNS_to_alpha (png_ptr);
-	}
-	if (bit_depth == 16) {
-		png_set_strip_16 (png_ptr);
-	}
+
+	/* Convert 16-bits per colour component to 8-bits per colour component. */
+	if (bit_depth == 16)
+		png_set_strip_16(png_ptr);
 	else if (bit_depth < 8) {
-	      png_set_packing (png_ptr);
+		png_set_packing(png_ptr);
 	}
 
-	png_read_update_info (png_ptr, info_ptr);
-	png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type, &interlace_type, NULL, NULL);
+	/* Convert grayscale to RGB triplets */
+	if ((color_type == PNG_COLOR_TYPE_GRAY) ||
+		(color_type == PNG_COLOR_TYPE_GRAY_ALPHA))
+		png_set_gray_to_rgb(png_ptr);
 
-	png_bytepp row_pointers = (png_bytepp)png_malloc(png_ptr, sizeof(png_bytepp) * height);
-	for (int i = 0; i < (int)height; i++) {
-		row_pointers[i] = (png_bytep)png_malloc(png_ptr, width * 4);
+	/* Turn on interlace handling. */
+	number_passes = png_set_interlace_handling(png_ptr);
+	
+	/* Call to gamma correct and add the background to the palette
+	 * and update info structure.
+	 */
+	png_read_update_info(png_ptr, info_ptr);
+	
+	/* Palettes. */
+	if (color_type & PNG_COLOR_MASK_PALETTE) {
+		int num_palette, i;
+		png_colorp palette;
+
+		if (png_get_PLTE(png_ptr, info_ptr, &palette, &num_palette)) {
+			/* We don't actually dither, we just copy the palette. */
+			for (i = 0; ((i < num_palette) && (i < 256)); i++) {
+				tmppal[i].r = palette[i].red;
+				tmppal[i].g = palette[i].green;
+				tmppal[i].b = palette[i].blue;
+			}
+
+			for (; i < 256; i++)
+				tmppal[i].r = tmppal[i].g = tmppal[i].b = 0;
+		}
 	}
-	png_set_rows(png_ptr, info_ptr, row_pointers);
-	png_read_image(png_ptr, row_pointers);
-	png_read_end(png_ptr, end_info);
 
-	unsigned char *bytes = new unsigned char[width * height * 4];
+	rowbytes = png_get_rowbytes(png_ptr, info_ptr);
 
-	if (color_type == PNG_COLOR_TYPE_RGB) {
-		for (int y = 0; y < (int)height; y++) {
-			unsigned char *p = bytes + (height-y-1)*width*4;
-			unsigned char *p2 = row_pointers[y];
-			for (int i = 0; i < (int)width; i++) {
-				int r = *p2++;
-				int g = *p2++;
-				int b = *p2++;
-				int a = 255;
-				*p++ = r;
-				*p++ = g;
-				*p++ = b;
-				*p++ = a;
+	unsigned char *bytes = new unsigned char[width*height*4];
+	unsigned char *row = new unsigned char[rowbytes];
+
+	/* Read the image, one line at a line (easier to debug!) */
+	for (pass = 0; pass < number_passes; pass++) {
+		png_uint_32 y;
+		for (y = 0; y < height; y++) {
+			int yy = (height-1)-y;
+			if (color_type == PNG_COLOR_TYPE_RGB) {
+				png_read_row(png_ptr, row, NULL);
+				unsigned char *d = bytes+yy*width*4;
+				unsigned char *s = row;
+				for (int i = 0; i < width; i++) {
+					int r = *s++;
+					int g = *s++;
+					int b = *s++;
+					*d++ = r;
+					*d++ = g;
+					*d++ = b;
+					*d++ = 255;
+				}
+			}
+			else {
+				png_read_row(png_ptr, row, NULL);
+				memcpy(bytes+yy*width*4, row, width*4);
 			}
 		}
 	}
-	else if (color_type == PNG_COLOR_TYPE_RGBA) {
-		for (int i = 0; i < (int)height; i++) {
-			memcpy(bytes+(height-i-1)*width*4, row_pointers[i], width * 4);
-		}
-	}
-	else {
-		return nullptr;
-	}
 
-	for (int i = 0; i < (int)height; i++) {
-		png_free(png_ptr, row_pointers[i]);
+	delete[] row;
+
+	/* Read rest of file, and get additional chunks in info_ptr. */
+	png_read_end(png_ptr, info_ptr);
+
+	/* Clean up after the read, and free any memory allocated. */
+	png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
+
+	if (out_palette != nullptr) {
+		memcpy(out_palette, tmppal, 256*4);
 	}
-	png_free(png_ptr, row_pointers);
-	png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
 
 	out_size.w = width;
 	out_size.h = height;
 
-	// FIXME opaque
+	util::Point<int> tl, br;
+	tl.x = -1;
+	tl.y = -1;
+	br.x = -1;
+	br.y = -1;
+	bool alpha = false;
+
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			unsigned char *p = bytes + y * width * 4 + x * 4;
+			int r, g, b, a;
+			r = *p++;
+			g = *p++;
+			b = *p++;
+			a = *p++;
+			if (a != 255) {
+				alpha = true;
+			}
+			if (a != 0) {
+				if (tl.x < 0 || tl.x > x) {
+					tl.x = x;
+				}
+				if (tl.y < 0 || tl.y > y) {
+					tl.y = y;
+				}
+				if (br.x < 0 || br.x < x) {
+					br.x = x;
+				}
+				if (br.y < 0 || br.y < y) {
+					br.y = y;
+				}
+			}
+		}
+	}
+
+	if (opaque_topleft != nullptr) {
+		*opaque_topleft = tl;
+	}
+
+	if (opaque_bottomright != nullptr) {
+		*opaque_bottomright = br;
+	}
+
+	if (has_alpha != nullptr) {
+		*has_alpha = alpha;
+	}
 
 	return bytes;
 }
