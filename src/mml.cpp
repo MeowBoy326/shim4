@@ -1473,6 +1473,10 @@ void MML::load(SDL_RWops *f, bool load_from_filesystem)
 				break;
 			}
 		}
+		if ((tmppos = tmp.find(';', 0)) != std::string::npos) {
+			tmp = tmp.substr(0, tmppos);
+		}
+		strcpy(buf, tmp.c_str());
 		int pos = 0;
 		std::string tok = token(buf, &pos);
 		if (tok[0] >= 'A' && tok[0] <= 'Z') {
