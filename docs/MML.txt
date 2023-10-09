@@ -41,6 +41,8 @@ The definitions and effects you can use are:
 Within a channel, there are many symbols you can use. This is an attempt to document all of them, hopefully
 I don't forget any this time...
 
+; - is a comment, everything after one is ignored on that line.
+
 abcdefg - Notes
 r - Rest (silence)
 w - wait (continues the same note)
