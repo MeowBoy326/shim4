@@ -48,6 +48,8 @@ w - wait (continues the same note)
 	half plus quarter and so on.
 	All of these can be proceeded by a number that is the length of the note. E.g. a1 is a whole note.
 
+^ - a tie. This continues an identical note, like a wait.
+
 + - is a sharp e.g. a+
 - - is a flat
 
