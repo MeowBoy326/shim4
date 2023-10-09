@@ -1460,6 +1460,19 @@ void MML::load(SDL_RWops *f, bool load_from_filesystem)
 
 	while (count < sz && util::SDL_fgets(f, buf, 1000)) {
 		count += strlen(buf);
+		std::string tmp = buf;
+		size_t tmppos;
+		while ((tmppos = tmp.find('^', 0)) != std::string::npos) {
+			if (tmppos < tmp.length()-1) {
+				tmp[tmppos] = 'w';
+				std::string tmp2 = tmp;
+				tmp = tmp2.substr(0, tmppos+1) + tmp2.substr(tmppos+2);
+			}
+			else {
+				// FIXME: malformatted for this parser
+				break;
+			}
+		}
 		int pos = 0;
 		std::string tok = token(buf, &pos);
 		if (tok[0] >= 'A' && tok[0] <= 'Z') {
